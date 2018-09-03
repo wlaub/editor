@@ -24,6 +24,51 @@ def make_form(parent, rows):
                 print('Form Warning: {}'.format(item[0]))
         tframe.pack(side=TOP)
 
+class BlockCanvas(Canvas):
+
+    def __init__(self, *args, **kwargs):
+        self.size = kwargs.pop('size', 100)
+        kwargs['width'] = self.size*4+5
+        kwargs['height'] = self.size*3+4
+        super().__init__(*args, **kwargs)
+
+        self.items = [[0 for x in range(3)] for y in range(4)]
+
+        self.tag_bind('token', "<ButtonPress>", self.on_token_press)
+        self.tag_bind('token', "<ButtonRelease>", self.on_token_release)
+
+        for x in range(4):
+            for y in range(3):
+                self.create_token((1+x*(self.size+1), 1+y*(self.size+1)), 'gray')
+
+    def create_token(self, coord, color):
+        '''Create a token at the given coordinate in the given color'''
+        (x,y) = coord
+        self.create_rectangle( x, y, x+self.size, y+self.size,
+                                fill=color, tags="token")
+
+    def on_token_press(self, event):
+        '''Begining drag of an object'''
+        # record the item and its location
+        x = event.x
+        y = event.y
+
+        item = self.find_closest(x, y)[0]
+
+        if event.num == 1:
+            self.itemconfig(item, fill='blue')
+        elif event.num == 2:
+            pass
+        else:
+            self.itemconfig(item, fill='red')
+
+    def on_token_release(self, event):
+        '''End drag of an object'''
+        # reset the drag information
+        pass
+
+
+
 class DragCanvas(Canvas):
 
     def __init__(self, *args, **kwargs):
@@ -54,7 +99,7 @@ class DragCanvas(Canvas):
         h= self.halo
         rect = [x -h, y-h, x+h, y+h]
         items = self.find_overlapping(*rect)
-        print(items)
+
         if len(items) == 0: return
         self._drag_data['item'] = items[0]
         self._drag_data["x"] = event.x
@@ -133,11 +178,8 @@ class App:
         key_frame = Frame(edit_frame) #TODO: min width?
         key_frame.pack(side=LEFT)
 
-        self.block_canvas = DragCanvas(key_frame,width=400, height=300, bg='gray', drag_x=False)
+        self.block_canvas = BlockCanvas(key_frame, bg='gray')
         self.block_canvas.pack(side=LEFT)
-
-        self.block_canvas.create_token((100, 100), "white")
-        self.block_canvas.create_token((200, 100), "black")
 
 
         #timing frame
