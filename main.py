@@ -24,6 +24,77 @@ def make_form(parent, rows):
                 print('Form Warning: {}'.format(item[0]))
         tframe.pack(side=TOP)
 
+class DragCanvas(Canvas):
+
+    def __init__(self, *args, **kwargs):
+        self.drag_x = kwargs.pop('drag_x', True)
+        self.drag_y = kwargs.pop('drag_y', True)
+        self.halo = kwargs.pop('halo', 0)
+
+        super().__init__(*args, **kwargs)
+
+        self._drag_data = {"x": 0, "y": 0, "item": None}
+
+        self.bind( "<ButtonPress-1>", self.on_token_press)
+        self.bind( "<ButtonRelease-1>", self.on_token_release)
+        self.bind( "<B1-Motion>", self.on_token_motion)
+
+
+    def create_token(self, coord, color):
+        '''Create a token at the given coordinate in the given color'''
+        (x,y) = coord
+        self.create_oval(x-25, y-25, x+25, y+25, 
+                                outline=color, fill=color, tags="token")
+
+    def on_token_press(self, event):
+        '''Begining drag of an object'''
+        # record the item and its location
+        x = event.x
+        y = event.y
+        h= self.halo
+        rect = [x -h, y-h, x+h, y+h]
+        items = self.find_overlapping(*rect)
+        print(items)
+        if len(items) == 0: return
+        self._drag_data['item'] = items[0]
+        self._drag_data["x"] = event.x
+        self._drag_data["y"] = event.y
+
+    def on_token_release(self, event):
+        '''End drag of an object'''
+        # reset the drag information
+        self._drag_data["item"] = None
+        self._drag_data["x"] = 0
+        self._drag_data["y"] = 0
+
+    def on_token_motion(self, event):
+        '''Handle dragging of an object'''
+        if self._drag_data["item"] == None: return
+        # compute how much the mouse has moved
+        delta_x = 0
+        delta_y = 0
+        if self.drag_x:
+            delta_x = event.x - self._drag_data["x"]
+        if self.drag_y:
+            delta_y = event.y - self._drag_data["y"]
+        # move the object the appropriate amount
+        self.move(self._drag_data["item"], delta_x, delta_y)
+        # record the new position
+        self._drag_data["x"] = event.x
+        self._drag_data["y"] = event.y
+
+
+class GridCanvas(DragCanvas):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.halo= 10
+
+    def create_token(self, x, color):
+        '''Create a token at the given coordinate in the given color'''
+        self.create_line(x, 0, x, 100, fill=color, tags="token")
+
+
 
 class App:
 
@@ -62,8 +133,12 @@ class App:
         key_frame = Frame(edit_frame) #TODO: min width?
         key_frame.pack(side=LEFT)
 
-        self.block_canvas = Canvas(key_frame,width=400, height=300, bg='gray')
+        self.block_canvas = DragCanvas(key_frame,width=400, height=300, bg='gray', drag_x=False)
         self.block_canvas.pack(side=LEFT)
+
+        self.block_canvas.create_token((100, 100), "white")
+        self.block_canvas.create_token((200, 100), "black")
+
 
         #timing frame
 
@@ -86,15 +161,15 @@ class App:
         self.track_canvas = Canvas(height=100, background='black')
         self.timing_pane.add(self.track_canvas)
 
-        self.keyframe_canvas = Canvas(height=100, background='black')
+        self.keyframe_canvas = GridCanvas(height=100, background='black', drag_y=False)
+        self.keyframe_canvas.create_token(50, 'white')
+        self.keyframe_canvas.create_token(100, 'white')
+
         self.timing_pane.add(self.keyframe_canvas)
 
         self.anal_canvas = Canvas(height=100, background='black')
         self.timing_pane.add(self.anal_canvas)
 
-
-    def say_hi(self):
-        print("hi there, everyone!")
 
 root = Tk()
 
