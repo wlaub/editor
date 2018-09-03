@@ -1,94 +1,104 @@
-import pygame
-from pygame.locals import *
 
-import time, math, sys, json
+from tkinter import  *
 
-import tkinter as tk
-from tkinter import filedialog as tkfile
+def make_form(parent, rows):
+    for row in rows:
+        tframe = Frame(parent)
+        for item in row:
+            if len(item[0]) > 0:
+                label = Label(tframe, text=item[0])
+                label.pack(side=LEFT)
+            args = []
+            kwargs = {}
+            try:
+                for ak in item[2:]:
+                    if isinstance(ak, dict):
+                        kwargs = ak
+                    else:
+                        args = ak
+            except: pass
+            try:
+                control = item[1](tframe, *args, **kwargs)
+                control.pack(side=LEFT)
+            except:
+                print('Form Warning: {}'.format(item[0]))
+        tframe.pack(side=TOP)
 
-pygame.mixer.pre_init(44100, -16, 2, 128)
 
-pygame.init()
-pygame.font.init()
+class App:
 
-pygame.mixer.init(44100)
+    def __init__(self, master):
 
-def vsub(a, b):
-    return list(map(lambda x: x[0]-x[1], zip(a,b)))
-def vadd(a, b):
-    return list(map(lambda x: x[0]+x[1], zip(a,b)))
+        frame = Frame(master)
+        frame.pack(fill=BOTH, expand=1)
 
 
-class Handler():
-    def __init__(self):
-        self.size= (800,600)
-        self.screen=pygame.display.set_mode(self.size)
-        self.done = False 
-        self.frame_length = 1/60.
+        edit_frame = Frame(frame, height=200)
+        edit_frame.pack(side=TOP)
 
-        self.objects = []
-        self.active_object = None #The selected textbox
-        self.prev_mpos = None
-        self.mpos = (0,0)
+        #song info frame
+        info_frame = Frame(edit_frame)
+        info_frame.pack(side=LEFT)
 
-        self.config = json.load(open('config.json','r'))
-        self.base_dir = self.config.get('BeatSaberDir', '.')
+        make_form(info_frame, [
+            [['Song Info']],
+            [['Name', Entry], ['Name2', Entry]],
+            [['Name', Entry], ['Name2', Entry]],
+            [['Name', Entry], ['Name2', Entry]],
+            [['Name', Entry], ['Name2', Entry]],
+            [['', Button, {'text':'button'}]],
+            ]) 
 
-        filename = tkfile.askdirectory(initialdir = self.base_dir)
-
-        #Load up files
-        #Need project class
-
-        #visual analyzer
-
-        #track display
-
-        #keyframes and cursor track
+        make_form(info_frame, [
+            [['Track Info']],
+            [['Name', Entry], ['Name2', Entry]],
+            [['Name', Entry], ['Name2', Entry]],
+            [['Name', Entry], ['Name2', Entry]],
+            [['Name', Entry], ['Name2', Entry]],
+            [['', Button, {'text':'button'}]],
+            ]) 
 
         #keyframe editor
+        key_frame = Frame(edit_frame) #TODO: min width?
+        key_frame.pack(side=LEFT)
 
-        #selection editor?
+        self.block_canvas = Canvas(key_frame,width=400, height=300, bg='gray')
+        self.block_canvas.pack(side=LEFT)
 
-        #playback view
+        #timing frame
 
-        #track definition editor
-        
-        #grid controller
+        timing_frame = Frame(frame, height=800)
+        timing_frame.pack(side=BOTTOM, fill=BOTH, expand=1)
 
+        timing_control_frame = Frame(timing_frame, width=64, bg='green')
+        timing_control_frame.pack(side=LEFT)
 
-    def run(self):
-        start_time = time.time()
+        #Timing control frame
 
-        while not self.done:
-            delta = time.time() - start_time
-            start_time += delta
-            self.prev_mpos = self.mpos
-            self.mpos = pygame.mouse.get_pos()
-            self.dmpos = vsub(self.mpos, self.prev_mpos)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    self.done = True
-                elif event.type == pygame.VIDEORESIZE:
-                    self.size = event.size
-                    for obj in self.objects:
-                        obj.resize(self.size)
-                    #TODO Update sizes?
-                elif event.type == KEYDOWN and event.key == K_ESCAPE:
-                    self.done = True
-                else:
-                    for obj in self.objects:
-                        obj.do_event(event)
+        button= Button(timing_control_frame, text='grid')
+        button.pack(side=LEFT)
 
-            self.screen.fill((0,0,0))
+        #timing pane
+
+        self.timing_pane = PanedWindow(timing_frame, orient='vertical', bg='yellow')
+        self.timing_pane.pack(side=RIGHT, fill=BOTH, expand=1)
+
+        self.track_canvas = Canvas(height=100, background='black')
+        self.timing_pane.add(self.track_canvas)
+
+        self.keyframe_canvas = Canvas(height=100, background='black')
+        self.timing_pane.add(self.keyframe_canvas)
+
+        self.anal_canvas = Canvas(height=100, background='black')
+        self.timing_pane.add(self.anal_canvas)
 
 
-            pygame.display.flip()
+    def say_hi(self):
+        print("hi there, everyone!")
 
-            extra_time = self.frame_length - (time.time()-start_time)
-            if extra_time > 0:
-                time.sleep(extra_time)
+root = Tk()
 
+app = App(root)
 
-handler = Handler()
-handler.run()
-
+root.mainloop()
+root.destroy() # optional; see description below
