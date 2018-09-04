@@ -94,16 +94,16 @@ class DragCanvas(Canvas):
     def on_token_press(self, event):
         '''Begining drag of an object'''
         # record the item and its location
-        x = event.x
-        y = event.y
+        x = self.canvasx(event.x)
+        y = self.canvasy(event.y)
         h= self.halo
         rect = [x -h, y-h, x+h, y+h]
         items = self.find_overlapping(*rect)
 
         if len(items) == 0: return
         self._drag_data['item'] = items[0]
-        self._drag_data["x"] = event.x
-        self._drag_data["y"] = event.y
+        self._drag_data["x"] = x
+        self._drag_data["y"] = y
 
     def on_token_release(self, event):
         '''End drag of an object'''
@@ -119,14 +119,14 @@ class DragCanvas(Canvas):
         delta_x = 0
         delta_y = 0
         if self.drag_x:
-            delta_x = event.x - self._drag_data["x"]
+            delta_x = self.canvasx(event.x) - self._drag_data["x"]
         if self.drag_y:
-            delta_y = event.y - self._drag_data["y"]
+            delta_y = self.canvasy(event.y) - self._drag_data["y"]
         # move the object the appropriate amount
         self.move(self._drag_data["item"], delta_x, delta_y)
         # record the new position
-        self._drag_data["x"] = event.x
-        self._drag_data["y"] = event.y
+        self._drag_data["x"] = self.canvasx(event.x)
+        self._drag_data["y"] = self.canvasy(event.y)
 
 
 class GridCanvas(DragCanvas):
@@ -137,7 +137,7 @@ class GridCanvas(DragCanvas):
 
     def create_token(self, x, color):
         '''Create a token at the given coordinate in the given color'''
-        self.create_line(x, 0, x, 100, fill=color, tags="token")
+        self.create_line(x, 0, x, self.cget('height'), fill=color, tags="token")
 
 
 
@@ -187,7 +187,7 @@ class App:
         timing_frame = Frame(frame, height=200)
         timing_frame.pack(side=BOTTOM, fill=BOTH, expand=1)
 
-        timing_control_frame = Frame(timing_frame, width=64, bg='green')
+        timing_control_frame = Frame(timing_frame, width=128, bg='green')
         timing_control_frame.pack(side=LEFT)
 
         #Timing control frame
@@ -197,13 +197,16 @@ class App:
 
         #timing pane
 
-        scrollbar = Scrollbar(self.timing_frame)
+        scrollbar = Scrollbar(timing_frame, orient=HORIZONTAL)
         scrollbar.pack(side=BOTTOM, fill=X)
 
-        self.track_canvas = GridCanvas(self.timing_frame, height=300, background='black', xscrollcommand=scrollbar.set)
-        self.track_canvas.pack(side=TOP, fill=x)
+        self.track_canvas = GridCanvas(timing_frame, height=300, background='black', xscrollcommand=scrollbar.set, drag_y=False)
+        self.track_canvas.pack(side=TOP, fill=BOTH)
+
+
         self.track_canvas.create_token(50, 'white')
         self.track_canvas.create_token(100, 'white')
+        self.track_canvas.create_token(5000, 'white')
 
         scrollbar.config(command=self.track_canvas.xview)
 
