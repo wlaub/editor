@@ -184,7 +184,7 @@ class App:
 
         #timing frame
 
-        timing_frame = Frame(frame, height=800)
+        timing_frame = Frame(frame, height=200)
         timing_frame.pack(side=BOTTOM, fill=BOTH, expand=1)
 
         timing_control_frame = Frame(timing_frame, width=64, bg='green')
@@ -200,8 +200,26 @@ class App:
         self.timing_pane = PanedWindow(timing_frame, orient='vertical', bg='yellow')
         self.timing_pane.pack(side=RIGHT, fill=BOTH, expand=1)
 
-        self.track_canvas = Canvas(height=100, background='black')
+
+        scrollbar = Scrollbar(self.timing_pane)
+
+        self.track_canvas = GridCanvas(height=300, background='black', xscrollcommand=scrollbar.set)
         self.timing_pane.add(self.track_canvas)
+        self.track_canvas.create_token(50, 'white')
+        self.track_canvas.create_token(100, 'white')
+
+
+
+
+        self.track_canvas = GridCanvas(height=100, background='black', xscrollcommand=scrollbar.set)
+        self.timing_pane.add(self.track_canvas)
+        self.track_canvas.create_token(50, 'white')
+        self.track_canvas.create_token(100, 'white')
+
+
+        self.timing_pane.add(scrollbar)
+
+        scrollbar.config(command=self.track_canvas.xview)
 
         self.keyframe_canvas = GridCanvas(height=100, background='black', drag_y=False)
         self.keyframe_canvas.create_token(50, 'white')
