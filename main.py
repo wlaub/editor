@@ -197,38 +197,16 @@ class App:
 
         #timing pane
 
-        self.timing_pane = PanedWindow(timing_frame, orient='vertical', bg='yellow')
-        self.timing_pane.pack(side=RIGHT, fill=BOTH, expand=1)
+        scrollbar = Scrollbar(self.timing_frame)
+        scrollbar.pack(side=BOTTOM, fill=X)
 
-
-        scrollbar = Scrollbar(self.timing_pane)
-
-        self.track_canvas = GridCanvas(height=300, background='black', xscrollcommand=scrollbar.set)
-        self.timing_pane.add(self.track_canvas)
+        self.track_canvas = GridCanvas(self.timing_frame, height=300, background='black', xscrollcommand=scrollbar.set)
+        self.track_canvas.pack(side=TOP, fill=x)
         self.track_canvas.create_token(50, 'white')
         self.track_canvas.create_token(100, 'white')
-
-
-
-
-        self.track_canvas = GridCanvas(height=100, background='black', xscrollcommand=scrollbar.set)
-        self.timing_pane.add(self.track_canvas)
-        self.track_canvas.create_token(50, 'white')
-        self.track_canvas.create_token(100, 'white')
-
-
-        self.timing_pane.add(scrollbar)
 
         scrollbar.config(command=self.track_canvas.xview)
 
-        self.keyframe_canvas = GridCanvas(height=100, background='black', drag_y=False)
-        self.keyframe_canvas.create_token(50, 'white')
-        self.keyframe_canvas.create_token(100, 'white')
-
-        self.timing_pane.add(self.keyframe_canvas)
-
-        self.anal_canvas = Canvas(height=100, background='black')
-        self.timing_pane.add(self.anal_canvas)
 
 
 root = Tk()
