@@ -86,7 +86,6 @@ class DragCanvas(Canvas):
         self.bind( "<ButtonRelease-1>", self.on_release)
         self.bind( "<B1-Motion>", self.on_motion)
 
-
     def register_draggable(self, tag, create=None, dragx = True, dragy=True, halo=0):
         if create == None: create = self._create_token
         self._drag_opts[tag] = {
@@ -114,15 +113,17 @@ class DragCanvas(Canvas):
         h= self.halo
         rect = [x -h, y-h, x+h, y+h]
         items = self.find_overlapping(*rect)
-        tags = [self.gettags(x)for x in items]
-        #TODO find the first item with a registered movable tag
-        #TODO find closest of items
+
+        items =list(filter(
+            lambda x: not all(y not in self._drag_opts.keys() for y in self.gettags(x)), items))
 
         if len(items) == 0: return
-        self._drag_data['item'] = items[0]
+        item = items[0]
+        tag = list(filter(lambda x: x in self._drag_opts.keys(), self.gettags(item)))[0]
+        self._drag_data['item'] = item
         self._drag_data["x"] = x
         self._drag_data["y"] = y
-#        self._drag_data['tag'] = 
+        self._drag_data['tag'] = tag
 
     def on_release(self, event):
         '''End drag of an object'''
