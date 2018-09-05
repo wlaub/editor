@@ -79,7 +79,7 @@ class DragCanvas(Canvas):
 
         super().__init__(*args, **kwargs)
 
-        self._drag_data = {"x": 0, "y": 0, "item": None, 'tag': None}
+        self._drag_data = {"x": 0, "y": 0, "item": None, 'opts': None}
         self._drag_opts = {}
 
         self.bind( "<ButtonPress-1>", self.on_press)
@@ -123,7 +123,7 @@ class DragCanvas(Canvas):
         self._drag_data['item'] = item
         self._drag_data["x"] = x
         self._drag_data["y"] = y
-        self._drag_data['tag'] = tag
+        self._drag_data['opts'] = self._drag_opts(tag)
 
     def on_release(self, event):
         '''End drag of an object'''
@@ -136,11 +136,13 @@ class DragCanvas(Canvas):
         '''Handle dragging of an object'''
         if self._drag_data["item"] == None: return
         # compute how much the mouse has moved
+        opts = self._drag_data['opts']
+
         delta_x = 0
         delta_y = 0
-        if self.drag_x:
+        if opts['dragx']:
             delta_x = self.canvasx(event.x) - self._drag_data["x"]
-        if self.drag_y:
+        if opts['dragy']:
             delta_y = self.canvasy(event.y) - self._drag_data["y"]
         # move the object the appropriate amount
         self.move(self._drag_data["item"], delta_x, delta_y)
