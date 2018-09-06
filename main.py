@@ -2,6 +2,8 @@
 from tkinter import  *
 import tkutil
 
+import math
+
 def make_form(parent, rows):
     for row in rows:
         tframe = Frame(parent)
@@ -31,39 +33,172 @@ class BlockCanvas(Canvas):
         self.size = kwargs.pop('size', 100)
         kwargs['width'] = self.size*4+5
         kwargs['height'] = self.size*3+4
+        kwargs['takefocus'] = True
         super().__init__(*args, **kwargs)
 
         self.items = [[0 for x in range(3)] for y in range(4)]
 
-        self.tag_bind('token', "<ButtonPress>", self.on_token_press)
-        self.tag_bind('token', "<ButtonRelease>", self.on_token_release)
+        self.bind("<ButtonPress>", self.on_press)
+        self.bind("<ButtonRelease>", self.on_release)
+        self.bind('<Key>', self.key_down)
+        self.bind('<KeyRelease>', self.key_up)
+        self.bind('<Enter>', lambda x: self.focus_set())
+        self.bind('<Motion>', self.mouse_move)
+
+        self.blue = '#0000cc'
+        self.red = '#cc0000'
+        self.black = '#000000'
+
+        self.dir = 8
+        self.keys_down = []
+
+        self.blocks = {}
 
         for x in range(4):
             for y in range(3):
-                self.create_token((1+x*(self.size+1), 1+y*(self.size+1)), 'gray')
+                self.blocks[(x,y)] = {'sel': None}
+                for i in range(9):
+                    items = self.create_token((x,y), self.blue, i)
+                    self.blocks[(x,y)][i] = items
 
-    def create_token(self, coord, color):
-        '''Create a token at the given coordinate in the given color'''
+    def create_token(self, coord, color, direction=0):
+        """
+        Token represents the direction (0-8). Color is self.red/blue/black
+        0 Up
+        1 Down
+        2 Left
+        3 Right
+        4 Up Left
+        5 Up Right
+        6 Down left
+        7 Down Right
+        8 No Direction
+        """
         (x,y) = coord
-        self.create_rectangle( x, y, x+self.size, y+self.size,
-                                fill=color, tags="token")
+#        self.create_rectangle( x, y, x+self.size, y+self.size,
+#                                fill=color, tags="token")
+#0 is cut up, 1 is cut down, 2 is cut left, 3 is cut right, 4 is cut up left, 5 is cut up right, 6 is cut down left, 7 is cut down right, 8 is cut any direction)
 
-    def on_token_press(self, event):
+        tag = ('d{}'.format(direction), 'x{}'.format(x), 'y{}'.format(y))
+
+        self.mpos = (0,0)
+
+        x = 1+x*(self.size+1)
+        y = 1+y*(self.size+1)
+
+        x+=self.size/2
+        y+=self.size/2
+
+        a = [1,0,.5,1.5,.75, 1.25,.25, 1.75, 0][direction]*3.14
+        size = self.size*.75
+        r = size/2
+        verts = [[
+            x+r*math.cos(a+3.14/4+3.14*i/2),
+            y+r*math.sin(a+3.14/4+3.14*i/2)
+            ] for i in range(4)] 
+        item = self.create_polygon(*verts, fill=color, tags=(*tag, 'block'))
+        self.itemconfigure(item, state=HIDDEN)
+        block = item
+
+        if direction < 8:
+            verts = [[
+                x+r*math.cos(a+3.14/4+3.14*i/2),
+                y+r*math.sin(a+3.14/4+3.14*i/2)
+                ] for i in range(2,4)]
+            i=2.5
+            r/=4
+            verts.append([
+                x+r*math.cos(a+3.14/4+3.14*i/2),
+                y+r*math.sin(a+3.14/4+3.14*i/2)
+                ])
+            item = self.create_polygon(*verts, fill='white', tags=tag)
+        elif direction == 8:
+            item = self.create_oval(x-r/2, y-r/2, x+r/2, y+r/2, fill='white', tags=tag)
+        self.itemconfigure(item, state=HIDDEN)
+        arrow = item
+        return block,arrow
+
+    def mouse_move(self, event):
+        self.mpos = (event.x, event.y)
+
+    def key_down(self, event):
+        if event.char in 'wasd': self.keys_down.append(event.char)
+        self.dir = self.get_key_dir()
+        x, y = self.mpos
+        x = math.floor(x/self.size)
+        y = math.floor(y/self.size)
+        self.update_block_dir(x,y, create=False)
+
+    def key_up(self, event):
+        if event.char in self.keys_down: self.keys_down.remove(event.char)
+        self.dir = self.get_key_dir()
+
+    def get_key_dir(self):
+        keys =''.join(sorted(self.keys_down))
+        dirmap = {
+            '': 8,
+            'w': 0,
+            's': 1,
+            'a': 2,
+            'd': 3,
+            'aw':4,
+            'dw':5,
+            'as':6,
+            'ds':7,
+            }
+        return dirmap.get(keys, self.dir)
+
+    def get_block_stack(self, x, y):
+        gentags = ('x{}'.format(x), 'y{}'.format(y))
+        dirtag ='d{}'.format(self.dir)
+        tagmap = {x: self.gettags(x) for x in self.find_all()}
+        result = []
+        dmatch = []
+        for item, tags in tagmap.items():
+            if gentags[0] in tags and gentags[1] in tags:
+                result.append(item)
+                if dirtag in tags:
+                    dmatch.append(item)
+        return result, dmatch
+
+
+    def update_block_dir(self, x, y, create=True):
+        blocks = self.blocks[(x,y)]
+     
+
+        items, selitems = self.get_block_stack(x,y)
+        if create or blocks['sel']!=None:
+            blocks['sel'] = self.dir
+            for i in range(9):
+                if i != self.dir:
+                    [self.itemconfig(x, state=HIDDEN) for x in blocks[i]]
+                else:
+                    selfitems = blocks[i]
+                    [self.itemconfig(x, state=NORMAL) for x in blocks[i]]
+
+        return selitems
+
+
+    def on_press(self, event):
         '''Begining drag of an object'''
         # record the item and its location
         x = event.x
         y = event.y
 
-        item = self.find_closest(x, y)[0]
+        x = math.floor(x/self.size)
+        y = math.floor(y/self.size)
+        print(x,y)
 
+        items = self.update_block_dir(x,y)
+        selitem = list(filter(lambda i: 'block' in self.gettags(i), items))[0]
         if event.num == 1:
-            self.itemconfig(item, fill='blue')
+            self.itemconfig(selitem, fill=self.blue)
         elif event.num == 2:
             pass
         else:
-            self.itemconfig(item, fill='red')
+            self.itemconfig(selitem, fill=self.red)
 
-    def on_token_release(self, event):
+    def on_release(self, event):
         '''End drag of an object'''
         # reset the drag information
         pass
@@ -141,7 +276,7 @@ class App:
         scrollbar = Scrollbar(timing_frame, orient=HORIZONTAL)
         scrollbar.pack(side=BOTTOM, fill=X)
 
-        self.track_canvas = GridCanvas(timing_frame, height=300, background='black', xscrollcommand=scrollbar.set)
+        self.track_canvas = GridCanvas(timing_frame, height=300, background='black', xscrollcommand=scrollbar.set, scrollregion=(0,0,1000,100))
         self.track_canvas.pack(side=TOP, fill=BOTH)
 
 
