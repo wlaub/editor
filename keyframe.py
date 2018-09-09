@@ -274,7 +274,8 @@ class BlockCanvas(Canvas):
         """
         givens position and direction/type, set that block
         """
-        items = self.update_block_dir(x,y, d)
+        self.dir = d
+        items = self.update_block_dir(x,y)
         self.update_type(items, t)
 
     def update_block_dir(self, x, y, create=True):
