@@ -267,7 +267,7 @@ class BlockCanvas(Canvas):
         blocks = self.blocks[(x,y)]
 
         blocks['sel'] = None
-        for item in selitems:
+        for item in items:
             self.itemconfig(item, state=HIDDEN)
 
     def set_block(self, x, y, d, t):
@@ -314,7 +314,7 @@ class BlockCanvas(Canvas):
         y = event.y
 
         x = math.floor(x/self.size)
-        y = math.floor(y/self.size)
+        y = 2-math.floor(y/self.size)
 
         items = self.update_block_dir(x,y)
         ntype = [-1,0,3,1][event.num]
