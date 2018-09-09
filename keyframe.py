@@ -28,8 +28,8 @@ class Keyframe():
     timing information, and provides functions to explore json data representing
     the keyframe. The block canvas will be responsible for loading data from a
     given Keyframe.
-    blocks is a 4x3 array of tuples (direction, type) or None with position as index
-    events is ? array of value or None with type as index
+    blocks is a dictionary of (x,y) to (direction, type)
+    events is dictionary of type: value
     obs is a list of tuples (xpos, height, width, duration) containing all obstacles starting
     this frame
     """
