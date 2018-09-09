@@ -34,7 +34,12 @@ class App:
 
         self.track_editor.set_callback('send_keyframe', self.keyframe_editor.load_keyframe)
 
+        self.load_song('./The Fox/info.json')
         self.load_track('./The Fox/Expert.json')
+
+    def load_song(self, filename):
+        data = json.load(open(filename, 'r'))
+        self.meta_editor.load_song(data)
 
     def load_track(self, filename):
         """

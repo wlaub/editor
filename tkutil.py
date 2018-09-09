@@ -24,4 +24,63 @@ def make_form(parent, rows):
         tframe.pack(side=TOP)
 
 
+class Form():
+    """
+    Form class that returns and loads dictionaries.
+    """
+
+    def __init__(self, parent):
+        self.root = Frame(parent)
+        self.active_frame = Frame(self.root)
+        self.controls = {}
+
+    def add_field(self, label, control, *args, **kwargs):
+        default = kwargs.pop('default_value', '')
+        key = kwargs.pop('_key', label)
+        show_label = kwargs.pop('show_label', True)
+        side = kwargs.pop('control_pack', LEFT)
+
+        ctrl_data = {
+            'default': default,
+            }
+
+        if show_label:
+            tlabel = Label(self.active_frame, text=label)
+            tlabel.pack(side=side)
+
+        if control == None: return None
+        content = StringVar()
+        ctrl_data['data'] = content
+        content.set(default)
+        if control == Entry:
+            kwargs['textvariable'] = content
+        elif control == OptionMenu:
+            args= [content, *args]
+        ctrl = control(self.active_frame, *args, **kwargs)
+        ctrl.pack(side=side, expand=1, fill=X)
+        ctrl_data['ctrl'] = ctrl
+
+        self.controls[key] = ctrl_data
+
+        return ctrl
+
+
+    def row(self):
+        self.active_frame.pack(side=TOP, expand=1, fill=X)
+        self.active_frame = Frame(self.root)
+
+    def end(self, side=TOP):
+        self.active_frame.pack(side=TOP)
+        self.root.pack(side=side)
+
+    def get_dict(self):
+        return {k:v['data'].get() for k,v in self.controls.items()}
+   
+    def load_dict(self, data):
+        for k,v in self.controls.items():
+            if not k in data.keys(): continue
+            v['data'].set(data[k])
+
+
+
 
