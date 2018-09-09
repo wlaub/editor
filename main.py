@@ -7,7 +7,8 @@ import meta
 
 import json
 import math
-
+import os
+import sys
 
 
 class App:
@@ -34,20 +35,32 @@ class App:
 
         self.track_editor.set_callback('send_keyframe', self.keyframe_editor.load_keyframe)
 
-        self.load_song('./The Fox/info.json')
-        self.load_track('./The Fox/Expert.json')
+        self.load_song('./The Fox')
+#        self.load_track('./The Fox/Expert.json')
 
-    def load_song(self, filename):
+    def load_song(self, loc):
+        filename = os.path.join(loc, 'info.json')
+
         data = json.load(open(filename, 'r'))
         self.meta_editor.load_song(data)
+        self.load_track(loc)
 
-    def load_track(self, filename):
+    def load_track(self, loc):
+        track = self.meta_editor.active_track
+        track_file = os.path.join(loc, track['jsonPath'])
+
+        self._load_track(track_file)
+
+    def _load_track(self, filename):
         """
         Load up the given track.
         """
+
         data = json.load(open(filename, 'r'))
+        self.meta_editor.load_track()
         self.keyframes = keyframe.Keyframe.load_keyframes(data)
         self.track_editor.load_keyframes(self.keyframes)
+
 
 
 root = Tk()
