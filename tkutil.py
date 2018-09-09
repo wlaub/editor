@@ -24,7 +24,7 @@ class DragCanvas(Canvas):
             }
 
     def create_token(self, tag, coord, *args, **kwargs):
-        self._drag_opts[tag]['create'](tag, coord, *args, **kwargs)
+        return self._drag_opts[tag]['create'](tag, coord, *args, **kwargs)
 
     #TODO: Register drag data for different tokens with optional additional callbacks
     def _create_token(self, tag, coord, color):
@@ -52,6 +52,7 @@ class DragCanvas(Canvas):
         self._drag_data["x"] = x
         self._drag_data["y"] = y
         self._drag_data['opts'] = self._drag_opts[tag]
+        return item
 
     def on_release(self, event):
         '''End drag of an object'''

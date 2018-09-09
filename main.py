@@ -73,6 +73,8 @@ class App:
 
         self.track_editor = track.Editor(frame)
 
+        self.track_editor.set_callback('send_keyframe', self.keyframe_editor.load_keyframe)
+
         self.load_track('./The Fox/Expert.json')
 
     def load_track(self, filename):

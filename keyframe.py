@@ -18,6 +18,9 @@ class Editor():
         self.block_canvas = BlockCanvas(self.frame, bg='gray')
         self.block_canvas.pack(side=LEFT)
 
+    def load_keyframe(self, kf):
+        self.block_canvas.load_keyframe(kf)
+
 
 class Keyframe():
     """
@@ -53,6 +56,8 @@ class Keyframe():
             result.append(nkey)
             lists= nkey.load_json(**lists)
             lists = {k:v for k,v in lists.items() if len(v) > 0}
+
+        result = sorted(result, key = lambda x: x.time)
 
         return result
 
@@ -141,6 +146,17 @@ class BlockCanvas(Canvas):
                 for i in range(9):
                     items = self.create_token((x,y), self.blue, i)
                     self.blocks[(x,y)][i] = items
+
+    def clear(self):
+        for x in range(4):
+            for y in range(3):
+                self.delete_block(x,y)
+
+    def load_keyframe(self, kf):
+        self.clear()
+        for (x,y),(d,t) in kf.blocks.items():
+            print(x,y,d,t)
+            self.set_block(x,y,d,t)
 
     def create_token(self, coord, color, direction=0):
         """
@@ -243,6 +259,24 @@ class BlockCanvas(Canvas):
         return result, dmatch
 
 
+    def delete_block(self, x, y):
+        """
+        Remove a block in the grid from existing        
+        """
+        items, selitems = self.get_block_stack(x,y)
+        blocks = self.blocks[(x,y)]
+
+        blocks['sel'] = None
+        for item in selitems:
+            self.itemconfig(item, state=HIDDEN)
+
+    def set_block(self, x, y, d, t):
+        """
+        givens position and direction/type, set that block
+        """
+        items = self.update_block_dir(x,y, d)
+        self.update_type(items, t)
+
     def update_block_dir(self, x, y, create=True):
         blocks = self.blocks[(x,y)]
      
@@ -259,6 +293,18 @@ class BlockCanvas(Canvas):
 
         return selitems
 
+    def update_type(self, items, t):
+        """
+        Update the type on the given list of items
+        """
+        selitem = list(filter(lambda i: 'block' in self.gettags(i), items))[0]
+        if t == 0: #red
+            self.itemconfig(selitem, fill=self.red)
+        elif t == 3: #bomb
+            pass
+        elif t == 1: #blue
+            self.itemconfig(selitem, fill=self.blue)
+
 
     def on_press(self, event):
         '''Begining drag of an object'''
@@ -268,16 +314,10 @@ class BlockCanvas(Canvas):
 
         x = math.floor(x/self.size)
         y = math.floor(y/self.size)
-        print(x,y)
 
         items = self.update_block_dir(x,y)
-        selitem = list(filter(lambda i: 'block' in self.gettags(i), items))[0]
-        if event.num == 1:
-            self.itemconfig(selitem, fill=self.red)
-        elif event.num == 2:
-            pass
-        else:
-            self.itemconfig(selitem, fill=self.blue)
+        ntype = [-1,0,3,1][event.num]
+        self.update_type(items, ntype)
 
     def on_release(self, event):
         '''End drag of an object'''
