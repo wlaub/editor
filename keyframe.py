@@ -181,7 +181,7 @@ class BlockCanvas(Canvas):
         self.mpos = (0,0)
 
         x = 1+x*(self.size+1)
-        y = 1+y*(self.size+1)
+        y = 1+(2-y)*(self.size+1)
 
         x+=self.size/2
         y+=self.size/2

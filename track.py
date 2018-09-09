@@ -101,13 +101,14 @@ class GridCanvas(Canvas):
        
         h = y2-y1
         grid = h/4.
-        hgrid = [y1 + n*grid for n in range(4)]
+        grid /= 2
+        hgrid = [y1 + (n+.5)*grid for n in range(4)]
 
         for xi in range(4):
             for yi in range(3)[::-1]:
                 if not (xi,yi) in kf.blocks.keys(): continue
                 d,t = kf.blocks[(xi,yi)]
-                s = grid*.2/(yi+1)
+                s = grid*.4*4/(yi+4)
                 fill = ['red','blue','white','black'][t]
                 self.create_rectangle((
                     x-s, hgrid[xi]-s,
