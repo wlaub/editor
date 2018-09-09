@@ -2,7 +2,9 @@
 from tkinter import  *
 import tkutil
 import keyframe
+import track
 
+import json
 import math
 
 def make_form(parent, rows):
@@ -28,18 +30,6 @@ def make_form(parent, rows):
                 print('Form Warning: {}'.format(item[0]))
         tframe.pack(side=TOP)
 
-
-class GridCanvas(tkutil.DragCanvas):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.halo= 10
-
-        def create_token(tag, coord, color):
-            x,y = coord
-            self.create_line(x, 0, x, self.cget('height'), fill=color, tags=tag)
-
-        self.register_draggable('line', dragy=False, halo=10, create= create_token)
 
 
 class App:
@@ -78,37 +68,20 @@ class App:
         #keyframe editor
 
         self.keyframe_editor = keyframe.Editor(edit_frame)
-#        key_frame, self.block_canvas = keyframe.make_ui(edit_frame)
-
 
         #timing frame
 
-        timing_frame = Frame(frame, height=200)
-        timing_frame.pack(side=BOTTOM, fill=BOTH, expand=1)
+        self.track_editor = track.Editor(frame)
 
-        timing_control_frame = Frame(timing_frame, width=128, bg='green')
-        timing_control_frame.pack(side=LEFT)
+        self.load_track('./The Fox/Expert.json')
 
-        #Timing control frame
-
-        button= Button(timing_control_frame, text='grid')
-        button.pack(side=LEFT)
-
-        #timing pane
-
-        scrollbar = Scrollbar(timing_frame, orient=HORIZONTAL)
-        scrollbar.pack(side=BOTTOM, fill=X)
-
-        self.track_canvas = GridCanvas(timing_frame, height=300, background='black', xscrollcommand=scrollbar.set, scrollregion=(0,0,1000,100))
-        self.track_canvas.pack(side=TOP, fill=BOTH)
-
-
-        self.track_canvas.create_token('line', (50,0), 'white')
-        self.track_canvas.create_token('line', (100,0), 'white')
-        self.track_canvas.create_token('line', (5000,0), 'white')
-
-        scrollbar.config(command=self.track_canvas.xview)
-
+    def load_track(self, filename):
+        """
+        Load up the given track.
+        """
+        data = json.load(open(filename, 'r'))
+        self.keyframes = keyframe.Keyframe.load_keyframes(data)
+        self.track_editor.load_keyframes(self.keyframes)
 
 
 root = Tk()
