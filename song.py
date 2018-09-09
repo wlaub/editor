@@ -65,6 +65,13 @@ class Note():
             }
 
 
+"""
+Obstacles:
+    lineindex = 0,1,2,3 = xpos
+    type = o,1 = full or half height
+    width = 1 = width
+"""
+
 class Grid():
     """
     Class that handles note grids and conversions between them

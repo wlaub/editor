@@ -76,11 +76,9 @@ class App:
             ]) 
 
         #keyframe editor
-        key_frame = Frame(edit_frame) #TODO: min width?
-        key_frame.pack(side=LEFT)
 
-        self.block_canvas = keyframe.BlockCanvas(key_frame, bg='gray')
-        self.block_canvas.pack(side=LEFT)
+        self.keyframe_editor = keyframe.Editor(edit_frame)
+#        key_frame, self.block_canvas = keyframe.make_ui(edit_frame)
 
 
         #timing frame
