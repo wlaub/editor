@@ -40,6 +40,8 @@ class Form():
         show_label = kwargs.pop('show_label', True)
         side = kwargs.pop('control_pack', LEFT)
 
+        trace = kwargs.pop('trace', None)
+
         ctrl_data = {
             'default': default,
             }
@@ -50,6 +52,8 @@ class Form():
 
         if control == None: return None
         content = StringVar()
+        if trace != None:
+            content.trace('w', trace)
         ctrl_data['data'] = content
         content.set(default)
         if control == Entry:
@@ -72,6 +76,15 @@ class Form():
     def end(self, side=TOP):
         self.active_frame.pack(side=TOP)
         self.root.pack(side=side)
+
+    def reset_om(self, key, nvals):
+        om = self.controls[key]
+        menu = om['ctrl']['menu']
+        lastval = om['data'].get()
+        menu.delete(0, 'end')
+        for val in nvals:
+            menu.add_command(label=val, command = lambda value=val:om['data'].set(value), )
+
 
     def get_dict(self):
         return {k:v['data'].get() for k,v in self.controls.items()}

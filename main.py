@@ -23,7 +23,7 @@ class App:
         edit_frame.pack(side=TOP)
 
         #song info frame
-        self.meta_editor = meta.Editor(edit_frame)
+        self.meta_editor = meta.Editor(self, edit_frame)
 
         #keyframe editor
 
@@ -39,15 +39,18 @@ class App:
 #        self.load_track('./The Fox/Expert.json')
 
     def load_song(self, loc):
+        self.song_dir = loc
         filename = os.path.join(loc, 'info.json')
 
         data = json.load(open(filename, 'r'))
         self.meta_editor.load_song(data)
-        self.load_track(loc)
+        self.load_track()
 
-    def load_track(self, loc):
+    def load_track(self):
+        loc = self.song_dir
         track = self.meta_editor.active_track
         track_file = os.path.join(loc, track['jsonPath'])
+        print('loading {}'.format(track_file))
 
         self._load_track(track_file)
 
@@ -58,6 +61,7 @@ class App:
 
         data = json.load(open(filename, 'r'))
         self.meta_editor.load_track()
+        self.track_editor.clear()
         self.keyframes = keyframe.Keyframe.load_keyframes(data)
         self.track_editor.load_keyframes(self.keyframes)
 

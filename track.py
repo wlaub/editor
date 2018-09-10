@@ -152,6 +152,11 @@ class Editor():
     def set_callback(self, key, func):
         self.callbacks[key] = func
 
+    def clear(self):
+        self.active_keyframe = None
+        self.kfmap = []
+        self.track_canvas.delete(ALL)
+
     def focus_keyframe(self, item):
         if item == None: return
         old = {v:k for k,v in self.kfmap.items()}.get(self.active_keyframe, None)
