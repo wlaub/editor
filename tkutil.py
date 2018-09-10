@@ -77,6 +77,9 @@ class Form():
         self.active_frame.pack(side=TOP)
         self.root.pack(side=side)
 
+    def set_val(self, key, val):
+        self.controls[key]['data'].set(val)
+
     def reset_om(self, key, nvals):
         om = self.controls[key]
         menu = om['ctrl']['menu']

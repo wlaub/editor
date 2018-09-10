@@ -54,6 +54,22 @@ class App:
 
         self._load_track(track_file)
 
+    def create_track(self, json_path):
+        filename = os.path.join(self.song_dir, json_path)
+        #TODO Check if it exists?
+        data = {
+            '_version': '1.5.0',
+            '_beatsPerMinute': 120, #TODO inherit
+            '_beatsPerBar': 4,
+            '_noteJumpSpeed': 10,
+            '_shuffle': 0,
+            '_shufflePeriod': 0.5,
+            '_notes': [],
+            '_events': [],
+            '_obstacles': [],
+        }
+        json.dump(data, open(filename,'w'))
+
     def _load_track(self, filename):
         """
         Load up the given track.
