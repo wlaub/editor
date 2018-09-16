@@ -1,5 +1,6 @@
 from tkinter import *
 import math
+import time
 
 def make_ui(parent):
     key_frame = Frame(parent) #TODO: min width?
@@ -138,29 +139,22 @@ class BlockCanvas(Canvas):
         self.dir = 8
         self.keys_down = []
 
-        self.blocks = {}
-
-        for x in range(4):
-            for y in range(3):
-                self.blocks[(x,y)] = {'sel': None}
-                for i in range(9):
-                    items = self.create_token((x,y), self.blue, i)
-                    self.blocks[(x,y)][i] = items
+        self.kf = None
 
     def clear(self):
-        for x in range(4):
-            for y in range(3):
-                self.delete_block(x,y)
+        self.delete(ALL)
 
     def load_keyframe(self, kf):
+        self.kf = kf
         self.clear()
-        for (x,y),(d,t) in kf.blocks.items():
-            print(x,y,d,t)
-            self.set_block(x,y,d,t)
 
-    def create_token(self, coord, color, direction=0):
+        for (x,y),(d,t) in kf.blocks.items():
+            self.draw_block(x,y,d,t)
+
+
+    def draw_block(self, x, y, d, t, kf = 0):
         """
-        Token represents the direction (0-8). Color is self.red/blue/black
+        Draw the defined block with a tag of kf
         0 Up
         1 Down
         2 Left
@@ -171,14 +165,6 @@ class BlockCanvas(Canvas):
         7 Down Right
         8 No Direction
         """
-        (x,y) = coord
-#        self.create_rectangle( x, y, x+self.size, y+self.size,
-#                                fill=color, tags="token")
-#0 is cut up, 1 is cut down, 2 is cut left, 3 is cut right, 4 is cut up left, 5 is cut up right, 6 is cut down left, 7 is cut down right, 8 is cut any direction)
-
-        tag = ('d{}'.format(direction), 'x{}'.format(x), 'y{}'.format(y))
-
-        self.mpos = (0,0)
 
         x = 1+x*(self.size+1)
         y = 1+(2-y)*(self.size+1)
@@ -186,18 +172,35 @@ class BlockCanvas(Canvas):
         x+=self.size/2
         y+=self.size/2
 
-        a = [1,0,.5,1.5,.75, 1.25,.25, 1.75, 0][direction]*3.14
         size = self.size*.75
         r = size/2
+ 
+        items = []
+
+        tags = (str(kf))
+
+        if t == 3: #draw a bomb and return
+            N = 12
+            verts = [[
+                x+r*math.cos(3.14*2*i/N)*(.5+.5*(i%2)),
+                y+r*math.sin(3.14*2*i/N)*(.5+.5*(i%2)),
+                ] for i in range(N)] 
+     
+            item = self.create_polygon(*verts, fill=self.black, tags=tags)
+            return [item]
+
+        a = [1,0,.5,1.5,.75, 1.25,.25, 1.75, 0][d]*3.14
+
+        color = [self.red, self.blue][t]
+
         verts = [[
             x+r*math.cos(a+3.14/4+3.14*i/2),
             y+r*math.sin(a+3.14/4+3.14*i/2)
             ] for i in range(4)] 
-        item = self.create_polygon(*verts, fill=color, tags=(*tag, 'block'))
-        self.itemconfigure(item, state=HIDDEN)
-        block = item
+        item = self.create_polygon(*verts, fill=color, tags=tags)
+        items.append(item)
 
-        if direction < 8:
+        if d < 8:
             verts = [[
                 x+r*math.cos(a+3.14/4+3.14*i/2),
                 y+r*math.sin(a+3.14/4+3.14*i/2)
@@ -208,12 +211,11 @@ class BlockCanvas(Canvas):
                 x+r*math.cos(a+3.14/4+3.14*i/2),
                 y+r*math.sin(a+3.14/4+3.14*i/2)
                 ])
-            item = self.create_polygon(*verts, fill='white', tags=tag)
-        elif direction == 8:
-            item = self.create_oval(x-r/2, y-r/2, x+r/2, y+r/2, fill='white', tags=tag)
-        self.itemconfigure(item, state=HIDDEN)
-        arrow = item
-        return block,arrow
+            item = self.create_polygon(*verts, fill='white', tags=tags)
+        elif d == 8:
+            item = self.create_oval(x-r/2, y-r/2, x+r/2, y+r/2, fill='white', tags=tags)
+        items.append(item)
+        return items
 
     def mouse_move(self, event):
         self.mpos = (event.x, event.y)
@@ -224,7 +226,6 @@ class BlockCanvas(Canvas):
         x, y = self.mpos
         x = math.floor(x/self.size)
         y = math.floor(y/self.size)
-        self.update_block_dir(x,y, create=False)
 
     def key_up(self, event):
         if event.char in self.keys_down: self.keys_down.remove(event.char)
@@ -245,80 +246,20 @@ class BlockCanvas(Canvas):
             }
         return dirmap.get(keys, self.dir)
 
-    def get_block_stack(self, x, y):
-        gentags = ('x{}'.format(x), 'y{}'.format(y))
-        dirtag ='d{}'.format(self.dir)
-        tagmap = {x: self.gettags(x) for x in self.find_all()}
-        result = []
-        dmatch = []
-        for item, tags in tagmap.items():
-            if gentags[0] in tags and gentags[1] in tags:
-                result.append(item)
-                if dirtag in tags:
-                    dmatch.append(item)
-        return result, dmatch
-
-
-    def delete_block(self, x, y):
-        """
-        Remove a block in the grid from existing        
-        """
-        items, selitems = self.get_block_stack(x,y)
-        blocks = self.blocks[(x,y)]
-
-        blocks['sel'] = None
-        for item in items:
-            self.itemconfig(item, state=HIDDEN)
-
-    def set_block(self, x, y, d, t):
-        """
-        givens position and direction/type, set that block
-        """
-        self.dir = d
-        items = self.update_block_dir(x,y)
-        self.update_type(items, t)
-
-    def update_block_dir(self, x, y, create=True):
-        blocks = self.blocks[(x,y)]
-     
-
-        items, selitems = self.get_block_stack(x,y)
-        if create or blocks['sel']!=None:
-            blocks['sel'] = self.dir
-            for i in range(9):
-                if i != self.dir:
-                    [self.itemconfig(x, state=HIDDEN) for x in blocks[i]]
-                else:
-                    selfitems = blocks[i]
-                    [self.itemconfig(x, state=NORMAL) for x in blocks[i]]
-
-        return selitems
-
-    def update_type(self, items, t):
-        """
-        Update the type on the given list of items
-        """
-        selitem = list(filter(lambda i: 'block' in self.gettags(i), items))[0]
-        if t == 0: #red
-            self.itemconfig(selitem, fill=self.red)
-        elif t == 3: #bomb
-            pass
-        elif t == 1: #blue
-            self.itemconfig(selitem, fill=self.blue)
-
 
     def on_press(self, event):
-        '''Begining drag of an object'''
-        # record the item and its location
+        if self.kf == None: return
         x = event.x
         y = event.y
 
         x = math.floor(x/self.size)
         y = 2-math.floor(y/self.size)
 
-        items = self.update_block_dir(x,y)
         ntype = [-1,0,3,1][event.num]
-        self.update_type(items, ntype)
+
+        self.kf.blocks[(x,y)] = (self.dir, ntype)
+        self.load_keyframe(self.kf)
+
 
     def on_release(self, event):
         '''End drag of an object'''
