@@ -12,15 +12,17 @@ def make_ui(parent):
     return key_frame, block_canvas
 
 class Editor():
-    def __init__(self, parent):
+    def __init__(self, app, parent):
+        self.app = app
         self.frame = Frame(parent) #TODO: min width?
         self.frame.pack(side=LEFT)
 
-        self.block_canvas = BlockCanvas(self.frame, bg='gray')
+        self.block_canvas = BlockCanvas(self, self.frame, bg='gray')
         self.block_canvas.pack(side=LEFT)
 
     def load_keyframe(self, kf):
         self.block_canvas.load_keyframe(kf)
+
 
 
 class Keyframe():
@@ -116,7 +118,8 @@ class Keyframe():
 
 class BlockCanvas(Canvas):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, editor, *args, **kwargs):
+        self.editor = editor
         self.size = kwargs.pop('size', 100)
         kwargs['width'] = self.size*4+5
         kwargs['height'] = self.size*3+4
@@ -246,6 +249,12 @@ class BlockCanvas(Canvas):
             }
         return dirmap.get(keys, self.dir)
 
+    def update(self):
+        """
+        Call this when the keyframe changes
+        """
+        self.load_keyframe(self.kf)
+        self.editor.app.track_editor.update_keyframe()
 
     def on_press(self, event):
         if self.kf == None: return
@@ -258,7 +267,7 @@ class BlockCanvas(Canvas):
         ntype = [-1,0,3,1][event.num]
 
         self.kf.blocks[(x,y)] = (self.dir, ntype)
-        self.load_keyframe(self.kf)
+        self.update()
 
 
     def on_release(self, event):

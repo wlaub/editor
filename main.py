@@ -27,11 +27,11 @@ class App:
 
         #keyframe editor
 
-        self.keyframe_editor = keyframe.Editor(edit_frame)
+        self.keyframe_editor = keyframe.Editor(self, edit_frame)
 
         #timing frame
 
-        self.track_editor = track.Editor(frame)
+        self.track_editor = track.Editor(self, frame)
 
         self.track_editor.set_callback('send_keyframe', self.keyframe_editor.load_keyframe)
 

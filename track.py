@@ -123,7 +123,8 @@ class Editor():
     Track timeline editor class
     """
 
-    def __init__(self, parent):
+    def __init__(self, app, parent):
+        self.app=app
         timing_frame = Frame(parent, height=200)
         timing_frame.pack(side=BOTTOM, fill=BOTH, expand=1)
 
@@ -156,6 +157,20 @@ class Editor():
         self.active_keyframe = None
         self.kfmap = []
         self.track_canvas.delete(ALL)
+
+    def get_item(self, kf):
+        """
+        Reverse lookup on kfmap for the given keyframe
+        """
+        for k, v in self.kfmap.items():
+            if v == kf: return k
+
+    def update_keyframe(self):
+        """
+        Receive an update from the keyframe editor
+        """
+        kf = self.active_keyframe
+        self.track_canvas.redraw_keyframe(self.get_item(kf), kf)
 
     def focus_keyframe(self, item):
         if item == None: return
