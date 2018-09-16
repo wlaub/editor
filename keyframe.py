@@ -224,11 +224,12 @@ class BlockCanvas(Canvas):
         self.mpos = (event.x, event.y)
 
     def key_down(self, event):
+        if len(event.char) == 0: return
         if event.char in 'wasd': self.keys_down.append(event.char)
         self.dir = self.get_key_dir()
-        x, y = self.mpos
-        x = math.floor(x/self.size)
-        y = math.floor(y/self.size)
+        x,y = self.grid(*self.mpos)
+        if ord(event.char) in [127]:
+            self.delete_block(x,y)
 
     def key_up(self, event):
         if event.char in self.keys_down: self.keys_down.remove(event.char)
@@ -256,14 +257,23 @@ class BlockCanvas(Canvas):
         self.load_keyframe(self.kf)
         self.editor.app.track_editor.update_keyframe()
 
-    def on_press(self, event):
-        if self.kf == None: return
-        x = event.x
-        y = event.y
-
+    def delete_block(self, x,y):
+        self.kf.blocks.pop((x,y), None)
+        self.update()
+    
+    def grid(self, x,y):
+        """
+        window coords into grid coords
+        """
         x = math.floor(x/self.size)
         y = 2-math.floor(y/self.size)
+        return x,y
 
+
+    def on_press(self, event):
+        if self.kf == None: return
+        x,y = self.grid(event.x, event.y)
+    
         ntype = [-1,0,3,1][event.num]
 
         self.kf.blocks[(x,y)] = (self.dir, ntype)
