@@ -23,6 +23,28 @@ class GridCanvas(Canvas):
 
         self.register_draggable('line', dragy=False, halo=10, create= create_token)
 
+        self.bind('<Key>', self.key_down)
+        self.bind('<KeyRelease>', self.key_up)
+        self.bind('<Enter>', lambda x: self.focus_set())
+        self.bind('<Left>', lambda x: self.editor.scroll_keyframe(-1))
+        self.bind('<Right>', lambda x: self.editor.scroll_keyframe(1))
+    
+    
+
+    def key_down(self, event):
+        pass
+
+    def key_up(self,event):
+        pass
+
+    def scroll(self, dt):
+        """
+        Scroll by the given dt
+        """
+        #TODO
+        pass
+
+
     def register_draggable(self, tag, create=None, dragx = True, dragy=True, halo=0):
         if create == None: create = self._create_token
         self._drag_opts[tag] = {
@@ -192,6 +214,26 @@ class Editor():
         self.track_canvas.itemconfig(item, fill='green')
         self.callbacks.get('send_keyframe', lambda x:x)(self.active_keyframe)
 
+    def scroll_keyframe(self, amt):
+        """
+        scroll by amt keyframes chronologically
+        """
+        self.keyframes = sorted(self.keyframes, key=lambda x: x.time)
+
+        idx = self.keyframes.index(self.active_keyframe)
+        nidx = idx+amt
+        nidx = min(max(nidx, 0), len(self.keyframes)-1)
+        nkf = self.keyframes[nidx]
+
+        nitem = self.get_item(nkf)
+
+        dt = nkf.time - self.active_keyframe.time
+
+        self.track_canvas.scroll(dt)
+
+        self.focus_keyframe(nitem)
+
+
     def load_keyframes(self, kfs):
         self.keyframes = kfs
         self.kfmap = {}
@@ -205,7 +247,7 @@ class Editor():
             self.track_canvas.redraw_keyframe(item, kf)
             self.kfmap[item] = kf
         self.callbacks.get('send_keyframe', lambda x:x)(self.active_keyframe)
-    
+        self.track_canvas.config(scrollregion= self.track_canvas.bbox(ALL)) 
 
 
 
