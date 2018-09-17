@@ -118,7 +118,14 @@ class GridCanvas(Canvas):
                     x+s, hgrid[xi]+s
                     ), fill=fill, outline=outline, tags=tag)
 
-
+        for xi, hi, wi, li in kf.obs:
+            s = grid
+            self.create_rectangle((
+                x, y1+grid*xi,
+                x+li*40,  y1+grid*(xi+wi)
+                ), fill='red', stipple='gray12',
+                outline='red',
+                tags=tag )
 
 
 class Editor():

@@ -66,7 +66,7 @@ class Keyframe():
 
     def cmp(self, t1):
         #Compare times abstractly. Allow for tolerance in the future
-        return t1 == self.time
+        return abs(t1- self.time) < .01
 
     def load_json(self, notes=[], events=[], obs=[]):
         """
@@ -105,6 +105,17 @@ class Keyframe():
             else:
                 result['obs'].append(ob)
 
+        return result
+
+    def get_walls(self, t):
+        """
+        Return a list of all walls (obs) from this keyframe that include
+        the given time t
+        """
+        result = []
+        for x, h, w, l in self.obs:
+            if self.time >= t and l+self.time <= t:
+                result.append((x,h,w,l))
         return result
 
     def get_notes_json(self):
@@ -154,6 +165,24 @@ class BlockCanvas(Canvas):
         for (x,y),(d,t) in kf.blocks.items():
             self.draw_block(x,y,d,t)
 
+        for x,h,w,l in kf.obs:
+            self.draw_wall(x,h,w)
+
+
+    def draw_wall(self, x, h, w):
+        """
+        Draw a wall cross section
+        h = 0 means full wall, h=1 means upper-half wall
+        """
+        x1,_ = self.ungrid(x, 0) 
+        x2,_ = self.ungrid(x+w, 0)
+        self.create_rectangle((
+            x1, 0, 
+            x2, self.size*3*(.5+.5*(1-h))),
+            fill='red',
+            stipple='gray12',
+            outline='red')
+
 
     def draw_block(self, x, y, d, t, kf = 0):
         """
@@ -169,8 +198,7 @@ class BlockCanvas(Canvas):
         8 No Direction
         """
 
-        x = 1+x*(self.size+1)
-        y = 1+(2-y)*(self.size+1)
+        x,y = self.ungrid(x,y)
 
         x+=self.size/2
         y+=self.size/2
@@ -267,6 +295,15 @@ class BlockCanvas(Canvas):
         """
         x = math.floor(x/self.size)
         y = 2-math.floor(y/self.size)
+        return x,y
+    
+    def ungrid(self, x, y):
+        """
+        window coords from grid coords
+        """
+        x = 1+x*(self.size+1)
+        y = 1+(2-y)*(self.size+1)
+
         return x,y
 
 
