@@ -1,7 +1,8 @@
 from tkinter import *
 
+import os
 import math
-
+import keyframe
 
 class GridCanvas(Canvas):
 
@@ -9,6 +10,8 @@ class GridCanvas(Canvas):
         self.halo = kwargs.pop('halo', 10)
         self.editor = kwargs.pop('editor')
         super().__init__(*args, **kwargs)
+
+        self.scale=1
 
         self._drag_data = {"x": 0, "y": 0, "item": None, 'opts': None}
         self._drag_opts = {}
@@ -149,6 +152,18 @@ class GridCanvas(Canvas):
                 outline='red',
                 tags=tag )
 
+    def draw_analysis(self, offset, song):
+        """
+        Take a song object and render its analsis to this canvas. Temp test
+        """
+        h = float(self.cget('height'))
+        w = float(self.cget('width'))
+        song.draw_waveform(self,
+            100*offset/1000, h/2,
+            w, h/2
+            )
+        self.config(scrollregion= self.bbox(ALL)) 
+
 
 class Editor():
     """
@@ -234,11 +249,30 @@ class Editor():
         self.focus_keyframe(nitem)
 
 
+    def btos(self, beat):
+        """Convert the beat to a time in seconds"""
+
+        return beat*60/self.bpm
+
+    def load_song(self, data):
+        self.bpm = data['beatsPerMinute']
+
+    def load_track(self, meta, data):
+        kfs = keyframe.Keyframe.load_keyframes(data)
+        self.load_keyframes(kfs)
+        self.offset = meta['offset']
+
+    def draw_analysis(self, song):
+        """
+        Take a song object and render its analsis to this canvas. Temp test
+        """
+        self.track_canvas.draw_analysis(self.offset, song)
+
     def load_keyframes(self, kfs):
         self.keyframes = kfs
         self.kfmap = {}
         for i, kf in enumerate(kfs):
-            xpos = kf.time*40
+            xpos = self.btos(kf.time)*100
             if i == 1:
                 self.active_keyframe = kf
                 item = self.track_canvas.create_token('line', (xpos, 0), 'green')
