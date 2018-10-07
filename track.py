@@ -147,7 +147,7 @@ class GridCanvas(Canvas):
             s = grid
             self.create_rectangle((
                 x, y1+grid*xi,
-                x+li*40,  y1+grid*(xi+wi)
+                x+li*40,  y1+grid*(xi+wi) #TODO fix width scaling
                 ), fill='red', stipple='gray12',
                 outline='red',
                 tags=tag )
